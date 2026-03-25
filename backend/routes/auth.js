@@ -5,7 +5,11 @@ const protect = require('../middleware/auth')
 const { requireDatabase } = require('../middleware/database')
 
 const signToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' })
+  jwt.sign(
+    { id },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || process.env.JWT_EXPIRE || '7d' }
+  )
 
 // POST /api/auth/login
 router.post('/login', requireDatabase, async (req, res) => {
