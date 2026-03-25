@@ -10,6 +10,14 @@ const app = express()
 const PORT = process.env.PORT || 5000
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio'
 const RECONNECT_DELAY_MS = 10000
+const DEFAULT_ALLOWED_ORIGINS = ['http://localhost:5173', 'http://localhost:4173']
+const allowedOrigins = Array.from(new Set([
+  ...DEFAULT_ALLOWED_ORIGINS,
+  ...(process.env.FRONTEND_URL || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+]))
 
 app.locals.dbReady = false
 app.locals.dbError = 'Database connection not established yet.'
@@ -17,7 +25,13 @@ app.locals.dbError = 'Database connection not established yet.'
 // Security middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
 app.use(cors({
-  origin: [process.env.FRONTEND_URL || 'http://localhost:5173', 'http://localhost:4173'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+
+    return callback(new Error(`Origin ${origin} is not allowed by CORS`))
+  },
   credentials: true,
 }))
 
