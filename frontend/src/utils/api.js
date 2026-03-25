@@ -1,7 +1,17 @@
 import axios from 'axios'
 
+const normalizeApiBaseUrl = (rawBaseUrl) => {
+  const baseUrl = rawBaseUrl?.trim()
+
+  if (!baseUrl) return '/api'
+  if (baseUrl === '/api') return baseUrl
+
+  const trimmedBaseUrl = baseUrl.replace(/\/+$/, '')
+  return trimmedBaseUrl.endsWith('/api') ? trimmedBaseUrl : `${trimmedBaseUrl}/api`
+}
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: normalizeApiBaseUrl(import.meta.env.VITE_API_URL),
 })
 
 API.interceptors.request.use((config) => {
