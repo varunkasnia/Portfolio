@@ -1,12 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { FiSave, FiAlertTriangle } from 'react-icons/fi'
+import { FiSave, FiAlertTriangle, FiImage, FiRotateCcw } from 'react-icons/fi'
 import toast from 'react-hot-toast'
-import API from '../../utils/api'
+import API, { getSettings, updateSettings, uploadImage } from '../../utils/api'
 
 const AdminSettings = () => {
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
-  const [saving, setSaving] = useState(false)
+  const [settingsForm, setSettingsForm] = useState({ backgroundImage: '' })
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [uploadingBackground, setUploadingBackground] = useState(false)
+
+  useEffect(() => {
+    getSettings()
+      .then((response) => {
+        setSettingsForm({
+          backgroundImage: response.data?.backgroundImage || '',
+        })
+      })
+      .catch(() => {
+        toast.error('Failed to load site settings')
+      })
+  }, [])
 
   const handlePasswordChange = async (e) => {
     e.preventDefault()
@@ -18,7 +33,7 @@ const AdminSettings = () => {
       toast.error('Password must be at least 6 characters')
       return
     }
-    setSaving(true)
+    setPasswordSaving(true)
     try {
       await API.put('/auth/change-password', {
         currentPassword: pwForm.currentPassword,
@@ -29,7 +44,57 @@ const AdminSettings = () => {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to change password')
     } finally {
-      setSaving(false)
+      setPasswordSaving(false)
+    }
+  }
+
+  const handleBackgroundUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploadingBackground(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const uploadResponse = await uploadImage(formData)
+      const nextBackgroundImage = uploadResponse.data?.url || ''
+
+      await updateSettings({ backgroundImage: nextBackgroundImage })
+      setSettingsForm({ backgroundImage: nextBackgroundImage })
+      toast.success('Background updated successfully!')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update background')
+    } finally {
+      setUploadingBackground(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleBackgroundSave = async () => {
+    setSettingsSaving(true)
+    try {
+      const response = await updateSettings(settingsForm)
+      setSettingsForm({ backgroundImage: response.data?.backgroundImage || '' })
+      toast.success('Background settings saved!')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save background settings')
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  const handleResetBackground = async () => {
+    setSettingsSaving(true)
+    try {
+      await updateSettings({ backgroundImage: '' })
+      setSettingsForm({ backgroundImage: '' })
+      toast.success('Background reset to default image')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reset background')
+    } finally {
+      setSettingsSaving(false)
     }
   }
 
@@ -40,8 +105,87 @@ const AdminSettings = () => {
     <div className="p-8 max-w-2xl">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="font-display text-2xl font-bold text-starlight mb-1">Settings</h1>
-        <p className="text-dim text-sm">Manage your admin account security.</p>
+        <p className="text-dim text-sm">Manage your admin account security and site background.</p>
       </motion.div>
+
+      <div className="glass rounded-2xl p-8 mb-5">
+        <h2 className="font-display text-lg font-bold text-starlight mb-6 flex items-center gap-2">
+          <FiImage className="text-aurora" size={18} />
+          Background Image
+        </h2>
+
+        <div className="flex flex-col gap-5">
+          <div
+            className="w-full h-52 rounded-2xl overflow-hidden border border-white/10 bg-center bg-cover bg-no-repeat"
+            style={{
+              backgroundColor: '#030508',
+              backgroundImage: settingsForm.backgroundImage
+                ? `url(${settingsForm.backgroundImage})`
+                : 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+            }}
+          >
+            {!settingsForm.backgroundImage ? (
+              <div className="w-full h-full flex items-center justify-center text-center px-6">
+                <p className="text-sm text-dim">
+                  Using the default bundled background image right now.
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          <div>
+            <label className="font-mono text-xs text-dim tracking-widest uppercase block mb-2">
+              Custom Background URL
+            </label>
+            <input
+              value={settingsForm.backgroundImage}
+              onChange={(e) => setSettingsForm({ backgroundImage: e.target.value })}
+              placeholder="https://... or uploaded file URL"
+              className={inputClass}
+              style={inputStyle}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <label className="btn-ghost text-xs cursor-pointer">
+              {uploadingBackground ? 'Uploading...' : 'Upload New Background'}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                className="hidden"
+                onChange={handleBackgroundUpload}
+                disabled={uploadingBackground}
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={handleBackgroundSave}
+              disabled={settingsSaving || uploadingBackground}
+              className="btn-primary flex items-center gap-2"
+            >
+              {settingsSaving
+                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <><FiSave size={14} /> Save Background</>
+              }
+            </button>
+
+            <button
+              type="button"
+              onClick={handleResetBackground}
+              disabled={settingsSaving || uploadingBackground}
+              className="btn-ghost flex items-center gap-2 text-xs"
+            >
+              <FiRotateCcw size={14} />
+              Use Default Background
+            </button>
+          </div>
+
+          <p className="text-xs text-dim">
+            Uploading will immediately save the new background. You can also paste any image URL manually and save it here.
+          </p>
+        </div>
+      </div>
 
       {/* Change Password */}
       <div className="glass rounded-2xl p-8">
@@ -69,8 +213,8 @@ const AdminSettings = () => {
             </div>
           ))}
 
-          <button type="submit" disabled={saving} className="btn-primary flex items-center justify-center gap-2 mt-2">
-            {saving
+          <button type="submit" disabled={passwordSaving} className="btn-primary flex items-center justify-center gap-2 mt-2">
+            {passwordSaving
               ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               : <><FiSave size={14} /> Update Password</>
             }
