@@ -31,6 +31,11 @@ const aboutSchema = new mongoose.Schema({
   avatar: { type: String, default: '' },
 }, { timestamps: true })
 
+// ─── Site Settings ────────────────────────────────────────────────────────────
+const siteSettingsSchema = new mongoose.Schema({
+  backgroundImage: { type: String, default: '' },
+}, { timestamps: true })
+
 // ─── Project ──────────────────────────────────────────────────────────────────
 const projectSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -83,6 +88,7 @@ const workshopSchema = new mongoose.Schema({
 module.exports = {
   Admin: mongoose.model('Admin', adminSchema),
   About: mongoose.model('About', aboutSchema),
+  SiteSettings: mongoose.model('SiteSettings', siteSettingsSchema),
   Project: mongoose.model('Project', projectSchema),
   Skill: mongoose.model('Skill', skillSchema),
   Achievement: mongoose.model('Achievement', achievementSchema),
