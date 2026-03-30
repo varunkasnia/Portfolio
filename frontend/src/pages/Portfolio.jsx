@@ -7,6 +7,7 @@ import AchievementsSection from '../components/sections/AchievementsSection'
 import WorkshopsSection from '../components/sections/WorkshopsSection'
 import ContactSection from '../components/sections/ContactSection'
 import { getSettings } from '../utils/api'
+import { normalizeBackgroundImageUrl } from '../utils/backgroundImageUrl'
 
 const backgroundImageModules = import.meta.glob('../assets/background/*.{png,jpg,jpeg,webp,avif,gif}', {
   eager: true,
@@ -26,7 +27,7 @@ const Portfolio = () => {
 
     getSettings()
       .then((response) => {
-        const nextBackground = response.data?.backgroundImage?.trim()
+        const nextBackground = normalizeBackgroundImageUrl(response.data?.backgroundImage)
         if (isMounted && nextBackground) {
           setBackgroundImage(nextBackground)
         }
