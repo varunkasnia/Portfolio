@@ -50,4 +50,8 @@ export const uploadImage = (formData) => API.post('/upload', formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 })
 
+export const uploadBackgroundImage = (formData) => API.post('/upload/background', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+
 export default API
