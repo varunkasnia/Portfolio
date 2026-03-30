@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { FiSave, FiAlertTriangle, FiImage, FiRotateCcw } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import API, { getSettings, updateSettings, uploadBackgroundImage } from '../../utils/api'
+import { normalizeBackgroundImageUrl } from '../../utils/backgroundImageUrl'
 
 const AdminSettings = () => {
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
@@ -15,7 +16,7 @@ const AdminSettings = () => {
     getSettings()
       .then((response) => {
         setSettingsForm({
-          backgroundImage: response.data?.backgroundImage || '',
+          backgroundImage: normalizeBackgroundImageUrl(response.data?.backgroundImage || ''),
         })
       })
       .catch(() => {
@@ -75,8 +76,9 @@ const AdminSettings = () => {
   const handleBackgroundSave = async () => {
     setSettingsSaving(true)
     try {
-      const response = await updateSettings(settingsForm)
-      setSettingsForm({ backgroundImage: response.data?.backgroundImage || '' })
+      const normalizedBackgroundImage = normalizeBackgroundImageUrl(settingsForm.backgroundImage)
+      const response = await updateSettings({ backgroundImage: normalizedBackgroundImage })
+      setSettingsForm({ backgroundImage: normalizeBackgroundImageUrl(response.data?.backgroundImage || '') })
       toast.success('Background settings saved!')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save background settings')
@@ -100,6 +102,7 @@ const AdminSettings = () => {
 
   const inputClass = "w-full px-4 py-3 rounded-xl text-sm text-starlight placeholder-dim/40 outline-none"
   const inputStyle = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }
+  const previewBackgroundImage = normalizeBackgroundImageUrl(settingsForm.backgroundImage)
 
   return (
     <div className="p-8 max-w-2xl">
@@ -119,12 +122,12 @@ const AdminSettings = () => {
             className="w-full h-52 rounded-2xl overflow-hidden border border-white/10 bg-center bg-cover bg-no-repeat"
             style={{
               backgroundColor: '#030508',
-              backgroundImage: settingsForm.backgroundImage
-                ? `url(${settingsForm.backgroundImage})`
+              backgroundImage: previewBackgroundImage
+                ? `url(${previewBackgroundImage})`
                 : 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
             }}
           >
-            {!settingsForm.backgroundImage ? (
+            {!previewBackgroundImage ? (
               <div className="w-full h-full flex items-center justify-center text-center px-6">
                 <p className="text-sm text-dim">
                   Using the default bundled background image right now.
@@ -182,7 +185,7 @@ const AdminSettings = () => {
           </div>
 
           <p className="text-xs text-dim">
-            Uploading will immediately save the new background. Background uploads now support files up to 200MB.
+            Uploading will immediately save the new background. Google Drive share links are converted automatically. Canva links still need a direct image URL.
           </p>
         </div>
       </div>
