@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FiSave, FiAlertTriangle, FiImage, FiRotateCcw } from 'react-icons/fi'
 import toast from 'react-hot-toast'
-import API, { getSettings, updateSettings, uploadImage } from '../../utils/api'
+import API, { getSettings, updateSettings, uploadBackgroundImage } from '../../utils/api'
 
 const AdminSettings = () => {
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
@@ -58,7 +58,7 @@ const AdminSettings = () => {
       const formData = new FormData()
       formData.append('image', file)
 
-      const uploadResponse = await uploadImage(formData)
+      const uploadResponse = await uploadBackgroundImage(formData)
       const nextBackgroundImage = uploadResponse.data?.url || ''
 
       await updateSettings({ backgroundImage: nextBackgroundImage })
@@ -182,7 +182,7 @@ const AdminSettings = () => {
           </div>
 
           <p className="text-xs text-dim">
-            Uploading will immediately save the new background. You can also paste any image URL manually and save it here.
+            Uploading will immediately save the new background. Background uploads now support files up to 200MB.
           </p>
         </div>
       </div>
