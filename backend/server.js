@@ -10,6 +10,7 @@ const app = express()
 const PORT = process.env.PORT || 5000
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio'
 const RECONNECT_DELAY_MS = 10000
+const DRIVE_DIR = path.join(__dirname, 'drive')
 const DEFAULT_ALLOWED_ORIGINS = ['http://localhost:5173', 'http://localhost:4173']
 const allowedOrigins = Array.from(new Set([
   ...DEFAULT_ALLOWED_ORIGINS,
@@ -43,8 +44,9 @@ app.use('/api', limiter)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Static uploads (local fallback when Cloudinary not configured)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
+// Static file storage served from the local drive folder
+app.use('/drive', express.static(DRIVE_DIR))
+app.use('/uploads', express.static(DRIVE_DIR))
 
 // Routes
 app.use('/api/auth', require('./routes/auth'))
