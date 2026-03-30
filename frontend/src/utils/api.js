@@ -23,6 +23,9 @@ API.interceptors.request.use((config) => {
 export const getAbout = () => API.get('/about')
 export const updateAbout = (data) => API.put('/about', data)
 
+export const getSettings = () => API.get('/settings')
+export const updateSettings = (data) => API.put('/settings', data)
+
 export const getProjects = () => API.get('/projects')
 export const createProject = (data) => API.post('/projects', data)
 export const updateProject = (id, data) => API.put(`/projects/${id}`, data)
