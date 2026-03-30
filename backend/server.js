@@ -49,6 +49,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 // Routes
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/about', require('./routes/about'))
+app.use('/api/settings', require('./routes/settings'))
 app.use('/api/projects', require('./routes/projects'))
 app.use('/api/skills', require('./routes/skills'))
 app.use('/api/achievements', require('./routes/achievements'))
