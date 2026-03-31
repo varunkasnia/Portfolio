@@ -3,6 +3,7 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const protect = require('../middleware/auth')
+const { isGoogleDriveConfigured, uploadFileToGoogleDrive } = require('../lib/googleDrive')
 
 const DEFAULT_IMAGE_SIZE_LIMIT = 5 * 1024 * 1024
 const BACKGROUND_IMAGE_SIZE_LIMIT = 200 * 1024 * 1024
@@ -39,15 +40,35 @@ const backgroundUpload = multer({
   fileFilter: imageFileFilter,
 })
 
+const removeLocalFile = (filePath) => {
+  if (!filePath) return
+  if (!fs.existsSync(filePath)) return
+  fs.unlinkSync(filePath)
+}
+
 const sendUploadResponse = (req, res) => {
-  try {
+  return (async () => {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' })
 
-    const url = `${process.env.BACKEND_URL || 'http://localhost:5000'}${DRIVE_PUBLIC_PATH}/${req.file.filename}`
-    return res.json({ url, public_id: req.file.filename })
-  } catch (err) {
-    return res.status(500).json({ message: err.message })
-  }
+    try {
+      if (isGoogleDriveConfigured()) {
+        const uploadedFile = await uploadFileToGoogleDrive(req.file.path, req.file)
+        removeLocalFile(req.file.path)
+
+        return res.json({
+          url: uploadedFile.url,
+          public_id: uploadedFile.fileId,
+          storage: 'google-drive',
+        })
+      }
+
+      const url = `${process.env.BACKEND_URL || 'http://localhost:5000'}${DRIVE_PUBLIC_PATH}/${req.file.filename}`
+      return res.json({ url, public_id: req.file.filename, storage: 'local' })
+    } catch (err) {
+      removeLocalFile(req.file?.path)
+      return res.status(500).json({ message: err.message })
+    }
+  })()
 }
 
 // POST /api/upload — protected
