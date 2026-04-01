@@ -1,22 +1,22 @@
 const fs = require('fs')
 const { google } = require('googleapis')
 
-const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive'
 const GOOGLE_DRIVE_PUBLIC_URL = 'https://drive.google.com/uc?export=view&id='
 
-// Threshold above which we explicitly request a resumable upload (5 MB)
+// Threshold above which we use resumable upload (5 MB)
 const RESUMABLE_THRESHOLD = 5 * 1024 * 1024
 
 const getGoogleDriveConfig = () => {
-  const clientEmail = process.env.GOOGLE_DRIVE_CLIENT_EMAIL?.trim()
-  const privateKey = process.env.GOOGLE_DRIVE_PRIVATE_KEY?.replace(/\\n/g, '\n').trim()
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim()
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim()
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN?.trim()
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID?.trim()
 
-  if (!clientEmail || !privateKey || !folderId) {
+  if (!clientId || !clientSecret || !refreshToken || !folderId) {
     return null
   }
 
-  return { clientEmail, privateKey, folderId }
+  return { clientId, clientSecret, refreshToken, folderId }
 }
 
 const isGoogleDriveConfigured = () => Boolean(getGoogleDriveConfig())
@@ -25,11 +25,10 @@ const createDriveClient = () => {
   const config = getGoogleDriveConfig()
   if (!config) return null
 
-  const auth = new google.auth.JWT({
-    email: config.clientEmail,
-    key: config.privateKey,
-    scopes: [GOOGLE_DRIVE_SCOPE],
-  })
+  // OAuth2 — files are owned by YOUR Google account, not the service account,
+  // so they count against your storage quota (no quota error).
+  const auth = new google.auth.OAuth2(config.clientId, config.clientSecret)
+  auth.setCredentials({ refresh_token: config.refreshToken })
 
   return {
     drive: google.drive({ version: 'v3', auth }),
@@ -40,13 +39,15 @@ const createDriveClient = () => {
 const uploadFileToGoogleDrive = async (localFilePath, file) => {
   const client = createDriveClient()
   if (!client) {
-    throw new Error('Google Drive upload is not configured')
+    throw new Error(
+      'Google Drive is not configured. Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ' +
+      'GOOGLE_REFRESH_TOKEN and GOOGLE_DRIVE_FOLDER_ID in your environment.'
+    )
   }
 
   const { drive, folderId } = client
   const fileName = file.originalname || file.filename
 
-  // Determine file size so we can choose the right upload strategy
   const fileSizeBytes = fs.statSync(localFilePath).size
   const useResumable = fileSizeBytes >= RESUMABLE_THRESHOLD
 
@@ -61,13 +62,9 @@ const uploadFileToGoogleDrive = async (localFilePath, file) => {
         body: fs.createReadStream(localFilePath),
       },
       fields: 'id,name',
-      supportsAllDrives: true,
     },
     {
-      // Use resumable uploads for files >= 5 MB (handles up to 5 TB per Google's limits)
-      // and multipart for small files (simpler, fewer round-trips)
       uploadType: useResumable ? 'resumable' : 'multipart',
-      // Retry transient failures automatically (network blips, 5xx responses)
       retry: true,
       retryConfig: {
         retry: 3,
@@ -85,11 +82,7 @@ const uploadFileToGoogleDrive = async (localFilePath, file) => {
   // Make the uploaded file publicly readable
   await drive.permissions.create({
     fileId,
-    supportsAllDrives: true,
-    requestBody: {
-      role: 'reader',
-      type: 'anyone',
-    },
+    requestBody: { role: 'reader', type: 'anyone' },
     fields: 'id',
   })
 
@@ -103,4 +96,3 @@ module.exports = {
   isGoogleDriveConfigured,
   uploadFileToGoogleDrive,
 }
-
