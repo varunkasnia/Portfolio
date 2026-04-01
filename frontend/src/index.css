@@ -1,0 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #020202;
+    color: #fafafa;
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+    cursor: auto;
+  }
+
+  ::selection {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #090909;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #d4d4d4;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgba(8, 8, 8, 0.62);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+  }
+
+  .glass-hover {
+    transition: all 0.3s ease;
+  }
+
+  .glass-hover:hover {
+    background: rgba(16, 16, 16, 0.82);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.08), inset 0 0 20px rgba(255, 255, 255, 0.02);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #ffffff, #d4d4d4, #8c8c8c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-aurora {
+    background: linear-gradient(90deg, #ffffff, #bdbdbd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-primary {
+    @apply relative px-6 py-3 font-display font-semibold text-sm tracking-wider uppercase overflow-hidden rounded-lg transition-all duration-300 text-black;
+    background: linear-gradient(135deg, #fafafa, #bdbdbd);
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 34px rgba(255, 255, 255, 0.24), 0 0 70px rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    @apply relative px-6 py-3 font-display font-semibold text-sm tracking-wider uppercase rounded-lg transition-all duration-300;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #fafafa;
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.34);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+  }
+
+  .section-label {
+    @apply font-mono text-xs tracking-[0.3em] uppercase text-aurora mb-3;
+  }
+
+  .section-title {
+    @apply font-display text-3xl md:text-4xl lg:text-5xl font-bold text-starlight;
+  }
+
+  .glow-line {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.92), rgba(212, 212, 212, 0.5), transparent);
+  }
+
+  .skill-card {
+    @apply glass glass-hover rounded-xl p-4 flex flex-col items-center gap-2 cursor-default transition-all duration-300;
+  }
+
+  .skill-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 36px rgba(255, 255, 255, 0.08);
+  }
+
+  .project-card {
+    @apply glass glass-hover rounded-2xl overflow-hidden cursor-pointer transition-all duration-300;
+  }
+
+  .project-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 60px rgba(255, 255, 255, 0.08);
+  }
+
+  .nav-link {
+    @apply relative font-body text-sm text-dim transition-colors duration-200 hover:text-aurora;
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: #ffffff;
+    transition: width 0.3s ease;
+  }
+
+  .nav-link:hover::after,
+  .nav-link.active::after {
+    width: 100%;
+  }
+}
+
+/* Animations */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
